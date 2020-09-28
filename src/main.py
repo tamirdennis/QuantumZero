@@ -4,15 +4,14 @@ to master the HillClimbingEnvironment, in which the agent has to reach the
 highest point on a map.
 """
 import time
-import numpy as np
-import matplotlib.pyplot as plt
 
-from src.sat3_env import SAT3Env
 # from src.trainer import Trainer
 # from src.policy import HillClimbingPolicy
 # from src.replay_memory import ReplayMemory
 # from src.hill_climbing_env import HillClimbingEnv
-from src.mcts import execute_episode_using_NN, MCTS, execute_regular_mcts_episode
+from src.mcts import MCTS, execute_regular_mcts_episode
+from src.sat3_env import SAT3Env
+from qutip import fidelity
 
 
 def log(test_env, iteration, step_idx, total_rew):
@@ -66,7 +65,8 @@ if __name__ == '__main__':
     policy_losses = []
     mcts = MCTS(SAT3Env)
     mcts.initialize_search()
-
+    best_merit = -float('inf')
+    best_node_path = None
     for i in range(150):
         # if i % 50 == 0 and i != 0:
         #     test_agent(i)
@@ -75,8 +75,16 @@ if __name__ == '__main__':
         #     plt.legend()
         #     plt.show()
 
-        obs, pis, returns, total_reward, done_state = execute_regular_mcts_episode(mcts, num_expansion=n_exp,
-                                                                                   num_simulations=n_sim)
+        curr_best_node, best_merit = execute_regular_mcts_episode(mcts, num_expansion=n_exp,
+                                                                  num_simulations=n_sim,
+                                                                  best_merit=best_merit)
+        best_node_path = best_node_path if curr_best_node is None else curr_best_node
+        if i % 25 == 0 and i != 0:
+            print(f'after {i} episodes of mcts the best fidelity is:')
+            best_node_path.TreeEnv.get_return(best_node_path.state, best_node_path.depth)
+            best_rho_final = best_node_path.TreeEnv.get_rho_final_of_done_state(best_node_path.state)
+            true_rho_final = best_node_path.TreeEnv.get_rho_lowest_energy_eigenstate_of_H_final()
+            print(fidelity(best_rho_final, true_rho_final))
         # mem.add_all({"ob": obs, "pi": pis, "return": returns})
         #
         # batch = mem.get_minibatch()
@@ -84,3 +92,4 @@ if __name__ == '__main__':
         # vl, pl = trainer.train(batch["ob"], batch["pi"], batch["return"])
         # value_losses.append(vl)
         # policy_losses.append(pl)
+    print()

@@ -3,12 +3,11 @@ import gym
 
 from src.static_env import StaticEnv
 from qutip import *
+from src.config import DATA_PATH, N_QUBITS, T
 
-
-data = np.loadtxt('data/sat7.txt')
+data = np.loadtxt(DATA_PATH)
 resultc = data.tolist()
-n_qubit = 7
-T = 40
+
 result = [int(x) for x in resultc[0]]
 
 
@@ -48,7 +47,7 @@ def satSystem(n_qubit, result):
     return HB, HP
 
 
-H0, H_final = satSystem(n_qubit, result)
+H0, H_final = satSystem(N_QUBITS, result)
 H0 = Qobj(H0)
 H_final = Qobj(H_final)
 
@@ -67,7 +66,7 @@ def H0_coeff(t, args):
 qutip.Qobj()
 H = [[H0, H0_coeff], [H_final, H_final_coeff]]
 t = np.array(list(range(T + 1)))
-psi0 = basis(2 ** n_qubit, 0)
+psi0 = basis(2 ** N_QUBITS, 0)
 
 
 class SAT3Env(gym.Env, StaticEnv):
@@ -117,16 +116,26 @@ class SAT3Env(gym.Env, StaticEnv):
         return None
 
     @staticmethod
-    def get_return(state, step_idx):
-        if step_idx != SAT3Env.M:
-            return 0
+    def get_rho_final_of_done_state(state):
         assert len(state) == SAT3Env.M
         args = {'M': SAT3Env.M}
         for i, x_i_value in enumerate(state):
             args[str(i + 1)] = x_i_value
         rho = qutip.mesolve(H, psi0, t, args=args)
         rho_final = rho.states[-1]
-        return abs((rho_final.trans() * H_final * rho_final)[0][0][0])
+        return rho_final
+
+    @staticmethod
+    def get_rho_lowest_energy_eigenstate_of_H_final():
+        _, evecs = H_final.eigenstates()
+        return evecs[0]
+
+    @staticmethod
+    def get_return(state, step_idx):
+        if step_idx != SAT3Env.M:
+            return 0
+        rho_final = SAT3Env.get_rho_final_of_done_state(state)
+        return - abs((rho_final.trans() * H_final * rho_final)[0][0][0])
 
 
 if __name__ == '__main__':

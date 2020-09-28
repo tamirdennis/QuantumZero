@@ -15,7 +15,7 @@ import random
 np.seterr(all='ignore')
 
 # Exploration constant
-c_PUCT = 1.38
+c_PUCT = 2
 # Dirichlet noise alpha parameter.
 D_NOISE_ALPHA = 0.03
 # Number of steps into the episode after which we always select the
@@ -41,6 +41,8 @@ class DummyNode:
     def revert_visits(self, up_to=None): pass
 
     def backup_value(self, value, up_to=None): pass
+
+    def update_visits(self, up_to): pass
 
 
 class MCTSNode:
@@ -108,7 +110,7 @@ class MCTSNode:
         """
         Returns the current action value of the node.
         """
-        return self.W / (1 + self.N)
+        return (self.W + 0.000000000001) / self.N
 
     @property
     def child_Q(self):
@@ -143,7 +145,6 @@ class MCTSNode:
         """
         current = self
         while True:
-            current.N += 1
             # Encountered leaf node (i.e. node that is not yet expanded).
             if not current.is_expanded:
                 break
@@ -243,6 +244,17 @@ class MCTSNode:
             return
         self.parent.backup_value(value, up_to)
 
+    def update_visits(self, up_to):
+        """
+        Propagates a value estimation up to the root node.
+        :param value: Value estimate to be propagated.
+        :param up_to: The node to propagate until.
+        """
+        self.N += 1
+        if self.parent is None or self is up_to:
+            return
+        self.parent.update_visits(up_to)
+
     def is_done(self):
         return self.TreeEnv.is_done_state(self.state, self.depth)
 
@@ -274,16 +286,14 @@ class MCTSNode:
         for _, child in sorted(self.children.items()):
             child.print_tree(level+1)
 
-    def perform_random_playouts_and_backpropagation(self, n_simulations):
+    def perform_random_playouts(self, n_simulations):
         done_nodes = []
         matching_done_nodes_merits = []
         for i in range(n_simulations):
             current_leaf = self
-            current_leaf.N += 1
             while not current_leaf.is_done():
                 random_action = np.random.choice(current_leaf.n_actions)
                 current_leaf = current_leaf.maybe_add_child(random_action)
-                current_leaf.N += 1
             immediate_merit = current_leaf.TreeEnv.get_return(current_leaf.state, current_leaf.depth)
             done_nodes.append(current_leaf)
             matching_done_nodes_merits.append(immediate_merit)
@@ -414,7 +424,7 @@ class MCTS:
         del self.root.parent.children
 
 
-def execute_regular_mcts_episode(mcts, num_simulations, num_expansion):
+def execute_regular_mcts_episode(mcts, num_simulations, num_expansion, best_merit=-float('inf')):
     """
         Executes a single episode of the task using Monte-Carlo tree search.
         An episode consists of 4 stages: selection, expansion, simulation and back propagation.
@@ -433,15 +443,20 @@ def execute_regular_mcts_episode(mcts, num_simulations, num_expansion):
     k_node.is_expanded = True
     if k_node.is_done():
         return
+    curr_best_path_node = None
     expanded_random_actions = random.sample(range(k_node.n_actions), min(num_expansion, k_node.n_actions))
     for action in expanded_random_actions:
         new_child: MCTSNode = k_node.maybe_add_child(action)
-        done_nodes, immediate_merits = new_child.perform_random_playouts_and_backpropagation(num_simulations)
+        done_nodes, immediate_merits = new_child.perform_random_playouts(num_simulations)
         # backpropagation:
         for done_node, im_merit in zip(done_nodes, immediate_merits):
             done_node.backup_value(im_merit, up_to=mcts.root)
+            done_node.update_visits(up_to=mcts.root)
+            if im_merit > best_merit:
+                curr_best_path_node = done_node
+                best_merit = im_merit
     # TODO return the current best path. when upgrading using NN add memory and return it for training.
-    return
+    return curr_best_path_node, best_merit
 
 
 def execute_episode_using_NN(agent_netw, num_simulations, TreeEnv):

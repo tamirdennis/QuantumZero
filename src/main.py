@@ -12,6 +12,7 @@ import time
 from src.mcts import MCTS, execute_regular_mcts_episode
 from src.sat3_env import SAT3Env
 from qutip import fidelity
+from src.config import DATA_PATH, N_QUBITS, T, M, l, DELTA
 
 
 def log(test_env, iteration, step_idx, total_rew):
@@ -63,6 +64,7 @@ if __name__ == '__main__':
 
     value_losses = []
     policy_losses = []
+    SAT3Env.init_env_from_params(DATA_PATH, N_QUBITS, T, num_x_components=M, l=l, delta=DELTA)
     mcts = MCTS(SAT3Env)
     mcts.initialize_search()
     best_merit = -float('inf')

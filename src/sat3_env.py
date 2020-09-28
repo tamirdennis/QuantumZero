@@ -3,12 +3,6 @@ import gym
 
 from src.static_env import StaticEnv
 from qutip import *
-from src.config import DATA_PATH, N_QUBITS, T
-
-data = np.loadtxt(DATA_PATH)
-resultc = data.tolist()
-
-result = [int(x) for x in resultc[0]]
 
 
 def satSystem(n_qubit, result):
@@ -47,28 +41,6 @@ def satSystem(n_qubit, result):
     return HB, HP
 
 
-H0, H_final = satSystem(N_QUBITS, result)
-H0 = Qobj(H0)
-H_final = Qobj(H_final)
-
-
-def H_final_coeff(t, args):
-    sum_over_sin_xi = 0
-    for i in range(1, args['M'] + 1):
-        sum_over_sin_xi += args[str(i)] * np.sin(i * np.pi * t / T)
-    return t / T + sum_over_sin_xi
-
-
-def H0_coeff(t, args):
-    return 1 - H_final_coeff(t, args)
-
-
-qutip.Qobj()
-H = [[H0, H0_coeff], [H_final, H_final_coeff]]
-t = np.array(list(range(T + 1)))
-psi0 = basis(2 ** N_QUBITS, 0)
-
-
 class SAT3Env(gym.Env, StaticEnv):
     """
     Simple gym environment with the goal to navigate the player from its
@@ -82,10 +54,15 @@ class SAT3Env(gym.Env, StaticEnv):
     The setup of this environment was inspired by the energy landscape in
     protein folding.
     """
-    M = 5
-    l = 0.2
-    delta = 0.01
-    n_actions = int((2 * l / delta) + 1)
+    H_final = None
+    H = None
+    psi0 = None
+    M = None
+    l = None
+    delta = None
+    n_actions = None
+    t = None
+    final_t = None
 
     def __init__(self):
         pass
@@ -98,6 +75,35 @@ class SAT3Env(gym.Env, StaticEnv):
 
     def render(self, mode='human'):
         pass
+
+    @staticmethod
+    def H_final_coeff(t, args):
+        sum_over_sin_xi = 0
+        for i in range(1, args['M'] + 1):
+            sum_over_sin_xi += args[str(i)] * np.sin(i * np.pi * t / SAT3Env.final_t)
+        return t / SAT3Env.final_t + sum_over_sin_xi
+
+    @staticmethod
+    def H0_coeff(t, args):
+        return 1 - SAT3Env.H_final_coeff(t, args)
+
+    @staticmethod
+    def init_env_from_params(data_path, n_qubits, final_t, num_x_components, l, delta):
+        data = np.loadtxt(data_path)
+        resultc = data.tolist()
+
+        result = [int(x) for x in resultc[0]]
+        H0, H_final = satSystem(n_qubits, result)
+        H0 = Qobj(H0)
+        SAT3Env.final_t = final_t
+        SAT3Env.H_final = Qobj(H_final)
+        SAT3Env.H = [[H0, SAT3Env.H0_coeff], [SAT3Env.H_final, SAT3Env.H_final_coeff]]
+        SAT3Env.t = np.array(list(range(1, final_t + 1)))
+        SAT3Env.psi0 = basis(2 ** n_qubits, 0)
+        SAT3Env.M = num_x_components
+        SAT3Env.l = l
+        SAT3Env.delta = delta
+        SAT3Env.n_actions = int((2 * l / delta) + 1)
 
     @staticmethod
     def next_state(state, action):
@@ -121,13 +127,13 @@ class SAT3Env(gym.Env, StaticEnv):
         args = {'M': SAT3Env.M}
         for i, x_i_value in enumerate(state):
             args[str(i + 1)] = x_i_value
-        rho = qutip.mesolve(H, psi0, t, args=args)
+        rho = qutip.mesolve(SAT3Env.H, SAT3Env.psi0, SAT3Env.t, args=args)
         rho_final = rho.states[-1]
         return rho_final
 
     @staticmethod
     def get_rho_lowest_energy_eigenstate_of_H_final():
-        _, evecs = H_final.eigenstates()
+        _, evecs = SAT3Env.H_final.eigenstates()
         return evecs[0]
 
     @staticmethod
@@ -135,7 +141,7 @@ class SAT3Env(gym.Env, StaticEnv):
         if step_idx != SAT3Env.M:
             return 0
         rho_final = SAT3Env.get_rho_final_of_done_state(state)
-        return - abs((rho_final.trans() * H_final * rho_final)[0][0][0])
+        return - abs((rho_final.trans() * SAT3Env.H_final * rho_final)[0][0][0])
 
 
 if __name__ == '__main__':

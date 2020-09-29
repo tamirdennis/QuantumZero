@@ -12,6 +12,8 @@ from typing import List
 import numpy as np
 import random
 
+from qutip import fidelity
+
 np.seterr(all='ignore')
 
 # Exploration constant
@@ -300,6 +302,12 @@ class MCTSNode:
 
         return done_nodes, matching_done_nodes_merits
 
+    def get_fidelity_of_node(self):
+        best_rho_final = self.TreeEnv.get_rho_final_of_done_state(self.state)
+        true_rho_final = self.TreeEnv.get_rho_lowest_energy_eigenstate_of_H_final()
+        return fidelity(best_rho_final, true_rho_final)
+
+
 class MCTS:
     """
     Represents a Monte-Carlo search tree and provides methods for performing
@@ -424,7 +432,7 @@ class MCTS:
         del self.root.parent.children
 
 
-def execute_regular_mcts_episode(mcts, num_simulations, num_expansion, best_merit=-float('inf')):
+def execute_regular_mcts_episode(mcts, num_simulations, num_expansion, best_merit=float('inf')):
     """
         Executes a single episode of the task using Monte-Carlo tree search.
         An episode consists of 4 stages: selection, expansion, simulation and back propagation.
@@ -452,10 +460,10 @@ def execute_regular_mcts_episode(mcts, num_simulations, num_expansion, best_meri
         for done_node, im_merit in zip(done_nodes, immediate_merits):
             done_node.backup_value(im_merit, up_to=mcts.root)
             done_node.update_visits(up_to=mcts.root)
-            if im_merit > best_merit:
+            if im_merit < best_merit:
                 curr_best_path_node = done_node
                 best_merit = im_merit
-    # TODO return the current best path. when upgrading using NN add memory and return it for training.
+    # TODO when upgrading using NN add memory and return it for training.
     return curr_best_path_node, best_merit
 
 

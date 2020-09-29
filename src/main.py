@@ -9,10 +9,14 @@ import time
 # from src.policy import HillClimbingPolicy
 # from src.replay_memory import ReplayMemory
 # from src.hill_climbing_env import HillClimbingEnv
-from src.mcts import MCTS, execute_regular_mcts_episode
-from src.sat3_env import SAT3Env
-from qutip import fidelity
-from src.config import DATA_PATH, N_QUBITS, T, M, l, DELTA, N_EXP, N_SIM
+from src.mcts import MCTS, execute_regular_mcts_episode, MCTSNode
+from src.sat3_env import QuantumAnnealerEnv
+from src.config import DATA_PATH, N_QUBITS, T_LIST, NUM_PROBLEMS_PER_T, M, l, DELTA, N_EXP, N_SIM,\
+    NUM_EPISODES_PER_PROBLEM
+import numpy as np
+from src.sat_hamiltonyans_creator import create_sat_hamiltonians
+import csv
+import os
 
 
 def log(test_env, iteration, step_idx, total_rew):
@@ -33,64 +37,41 @@ def log(test_env, iteration, step_idx, total_rew):
 
 if __name__ == '__main__':
 
+    data = np.loadtxt(DATA_PATH)
+    run_statistics_cols = ['T', 'Problem Index', 'Fidelity', 'Time To Solve', 'Num Episodes Per Problem']
+    os.makedirs('output', exist_ok=True)
+    output_csv_path = os.path.join('output', 'run_statistics_200-80.csv')
+    with open(output_csv_path, 'a') as f:
+        writer = csv.writer(f)
+        writer.writerow(run_statistics_cols)
+    run_statistics_rows = []
+    for final_t in T_LIST:
+        for i in range(NUM_PROBLEMS_PER_T):
+            start_time = time.time()
+            H0, H_final = create_sat_hamiltonians(N_QUBITS, data, i)
+            QuantumAnnealerEnv.init_env_from_params(H0, H_final, final_t, num_x_components=M, l=l, delta=DELTA)
+            n_actions = QuantumAnnealerEnv.n_actions
+            mcts = MCTS(QuantumAnnealerEnv)
+            mcts.initialize_search()
+            best_merit = float('inf')
+            best_node_path: MCTSNode = None
+            for j in range(NUM_EPISODES_PER_PROBLEM):
 
-    # trainer = Trainer(lambda: HillClimbingPolicy(n_obs, 20, n_actions))
-    # network = trainer.step_model
-    #
-    # mem = ReplayMemory(200,
-    #                    { "ob": np.long,
-    #                      "pi": np.float32,
-    #                      "return": np.float32},
-    #                    { "ob": [],
-    #                      "pi": [n_actions],
-    #                      "return": []})
+                curr_best_node, best_merit = execute_regular_mcts_episode(mcts, num_expansion=N_EXP,
+                                                                          num_simulations=N_SIM,
+                                                                          best_merit=best_merit)
+                best_node_path = best_node_path if curr_best_node is None else curr_best_node
 
-    # def test_agent(iteration):
-    #     test_env = HillClimbingEnv()
-    #     total_rew = 0
-    #     state, reward, done, _ = test_env.reset()
-    #     step_idx = 0
-    #     while not done:
-    #         log(test_env, iteration, step_idx, total_rew)
-    #         p, _ = network.step(np.array([state]))
-    #         # print(p)
-    #         action = np.argmax(p)
-    #         state, reward, done, _ = test_env.step(action)
-    #         step_idx+=1
-    #         total_rew += reward
-    #     log(test_env, iteration, step_idx, total_rew)
+                if j % 10 == 0 and j != 0 and j != NUM_EPISODES_PER_PROBLEM - 1 and best_node_path is not None:
+                    print(f'after {j} episodes of mcts the best fidelity is:')
+                    print(best_node_path.get_fidelity_of_node())
+            new_row = [final_t, i, best_node_path.get_fidelity_of_node(), time.time() - start_time,
+                       NUM_EPISODES_PER_PROBLEM]
+            run_statistics_rows.append(new_row)
+            print(f'Adding following row to csv: \n {run_statistics_cols}')
+            print(run_statistics_rows[-1])
+            with open(output_csv_path, 'a') as f:
+                writer = csv.writer(f)
+                writer.writerow(new_row)
 
-    value_losses = []
-    policy_losses = []
-    SAT3Env.init_env_from_params(DATA_PATH, N_QUBITS, T, num_x_components=M, l=l, delta=DELTA)
-    n_actions = SAT3Env.n_actions
-    mcts = MCTS(SAT3Env)
-    mcts.initialize_search()
-    best_merit = -float('inf')
-    best_node_path = None
-    for i in range(150):
-        # if i % 50 == 0 and i != 0:
-        #     test_agent(i)
-        #     plt.plot(value_losses, label="value loss")
-        #     plt.plot(policy_losses, label="policy loss")
-        #     plt.legend()
-        #     plt.show()
 
-        curr_best_node, best_merit = execute_regular_mcts_episode(mcts, num_expansion=N_EXP,
-                                                                  num_simulations=N_SIM,
-                                                                  best_merit=best_merit)
-        best_node_path = best_node_path if curr_best_node is None else curr_best_node
-        if i % 10 == 0 and i != 0:
-            print(f'after {i} episodes of mcts the best fidelity is:')
-            best_node_path.TreeEnv.get_return(best_node_path.state, best_node_path.depth)
-            best_rho_final = best_node_path.TreeEnv.get_rho_final_of_done_state(best_node_path.state)
-            true_rho_final = best_node_path.TreeEnv.get_rho_lowest_energy_eigenstate_of_H_final()
-            print(fidelity(best_rho_final, true_rho_final))
-        # mem.add_all({"ob": obs, "pi": pis, "return": returns})
-        #
-        # batch = mem.get_minibatch()
-        #
-        # vl, pl = trainer.train(batch["ob"], batch["pi"], batch["return"])
-        # value_losses.append(vl)
-        # policy_losses.append(pl)
-    print()

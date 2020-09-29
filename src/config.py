@@ -1,8 +1,10 @@
 DATA_PATH = 'data/sat11.txt'
 N_QUBITS = 11
-T = 75
+T_LIST = list(range(30, 301, 30))
 M = 5
 l = 0.2
 DELTA = 0.01
 N_SIM = 5
 N_EXP = 10
+NUM_PROBLEMS_PER_T = 1
+NUM_EPISODES_PER_PROBLEM = 80

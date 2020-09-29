@@ -99,7 +99,7 @@ class SAT3Env(gym.Env, StaticEnv):
         SAT3Env.H_final = Qobj(H_final)
         SAT3Env.H = [[H0, SAT3Env.H0_coeff], [SAT3Env.H_final, SAT3Env.H_final_coeff]]
         SAT3Env.t = np.array(list(range(1, final_t + 1)))
-        SAT3Env.psi0 = basis(2 ** n_qubits, 0)
+        SAT3Env.psi0 = H0.eigenstates()[1][0]
         SAT3Env.M = num_x_components
         SAT3Env.l = l
         SAT3Env.delta = delta

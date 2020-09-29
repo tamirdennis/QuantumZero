@@ -4,3 +4,5 @@ T = 75
 M = 5
 l = 0.2
 DELTA = 0.01
+N_SIM = 5
+N_EXP = 10

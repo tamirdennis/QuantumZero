@@ -12,7 +12,7 @@ import time
 from src.mcts import MCTS, execute_regular_mcts_episode
 from src.sat3_env import SAT3Env
 from qutip import fidelity
-from src.config import DATA_PATH, N_QUBITS, T, M, l, DELTA
+from src.config import DATA_PATH, N_QUBITS, T, M, l, DELTA, N_EXP, N_SIM
 
 
 def log(test_env, iteration, step_idx, total_rew):
@@ -32,9 +32,7 @@ def log(test_env, iteration, step_idx, total_rew):
 
 
 if __name__ == '__main__':
-    n_actions = SAT3Env.n_actions
-    n_sim = 5
-    n_exp = 10
+
 
     # trainer = Trainer(lambda: HillClimbingPolicy(n_obs, 20, n_actions))
     # network = trainer.step_model
@@ -65,6 +63,7 @@ if __name__ == '__main__':
     value_losses = []
     policy_losses = []
     SAT3Env.init_env_from_params(DATA_PATH, N_QUBITS, T, num_x_components=M, l=l, delta=DELTA)
+    n_actions = SAT3Env.n_actions
     mcts = MCTS(SAT3Env)
     mcts.initialize_search()
     best_merit = -float('inf')
@@ -77,11 +76,11 @@ if __name__ == '__main__':
         #     plt.legend()
         #     plt.show()
 
-        curr_best_node, best_merit = execute_regular_mcts_episode(mcts, num_expansion=n_exp,
-                                                                  num_simulations=n_sim,
+        curr_best_node, best_merit = execute_regular_mcts_episode(mcts, num_expansion=N_EXP,
+                                                                  num_simulations=N_SIM,
                                                                   best_merit=best_merit)
         best_node_path = best_node_path if curr_best_node is None else curr_best_node
-        if i % 25 == 0 and i != 0:
+        if i % 10 == 0 and i != 0:
             print(f'after {i} episodes of mcts the best fidelity is:')
             best_node_path.TreeEnv.get_return(best_node_path.state, best_node_path.depth)
             best_rho_final = best_node_path.TreeEnv.get_rho_final_of_done_state(best_node_path.state)

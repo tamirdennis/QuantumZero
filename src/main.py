@@ -10,7 +10,7 @@ import time
 # from src.replay_memory import ReplayMemory
 # from src.hill_climbing_env import HillClimbingEnv
 from src.mcts import MCTS, execute_regular_mcts_episode, MCTSNode
-from src.sat3_env import QuantumAnnealerEnv
+from src.quantum_annealer_env import QuantumAnnealerEnv
 from src.config import DATA_PATH, N_QUBITS, T_LIST, NUM_PROBLEMS_PER_T, M, l, DELTA, N_EXP, N_SIM,\
     NUM_EPISODES_PER_PROBLEM
 import numpy as np

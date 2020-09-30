@@ -2,12 +2,7 @@ import numpy as np
 from qutip import Qobj
 
 
-def create_sat_hamiltonians(n_qubit, data, problem_row):
-
-    resultc = data.tolist()
-
-    result = [int(x) for x in resultc[problem_row]]
-    N = 2 ** n_qubit
+def general_H0_creator(n_qubit):
 
     sx = np.array([[0, 1], [1, 0]])
     si = np.array([[1, 0], [0, 1]])
@@ -33,19 +28,30 @@ def create_sat_hamiltonians(n_qubit, data, problem_row):
                 B = np.kron(si, B)
 
         HB = HB - B / 2
+    return Qobj(HB)
+
+
+def create_sat_hamiltonians(n_qubit, data, problem_row):
+
+    resultc = data.tolist()
+
+    result = [int(x) for x in resultc[problem_row]]
+    N = 2 ** n_qubit
+
+    H0 = general_H0_creator(n_qubit)
 
     HC = np.zeros((N, N))
     for i in result:
         HC[i, i] = HC[i, i] + 1
     HP = HC
 
-    return Qobj(HB), Qobj(HP)
+    return H0, Qobj(HP)
 
 
-def get_grover_Hf(num_of_qubits):
+def create_grover_hamiltonians(num_of_qubits):
     N = 2**num_of_qubits
     ind2find = np.random.randint(N)
     H_f = np.diag(np.ones(N))
     H_f[ind2find, ind2find] = 0
-    return H_f
+    return general_H0_creator(num_of_qubits), Qobj(H_f)
 

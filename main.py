@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data = np.loadtxt(DATA_PATH)
     run_statistics_cols = ['T', 'Problem Index', 'Fidelity', 'Time To Solve', 'Num Episodes Per Problem']
     os.makedirs('output', exist_ok=True)
-    output_csv_path = os.path.join('output', 'run_statistics.csv')
+    output_csv_path = os.path.join('output', 'run_statistics_grover.csv')
     if not os.path.exists(output_csv_path):
         with open(output_csv_path, 'a') as f:
             writer = csv.writer(f)

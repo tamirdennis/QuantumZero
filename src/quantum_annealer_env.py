@@ -52,12 +52,15 @@ class QuantumAnnealerEnv(gym.Env, StaticEnv):
         return 1 - QuantumAnnealerEnv.H_final_coeff(t, args)
 
     @staticmethod
-    def init_env_from_params(H0, H_final, final_t, num_x_components, l, delta):
+    def init_env_from_params(H0, H_final, final_t, num_x_components, l, delta, max_t_points=100):
 
         QuantumAnnealerEnv.final_t = final_t
         QuantumAnnealerEnv.H_final = H_final
         QuantumAnnealerEnv.H = [[H0, QuantumAnnealerEnv.H0_coeff], [QuantumAnnealerEnv.H_final, QuantumAnnealerEnv.H_final_coeff]]
-        QuantumAnnealerEnv.t = np.array(list(range(1, final_t + 1)))
+        if final_t > max_t_points:
+            QuantumAnnealerEnv.t = np.linspace(start=1, stop=final_t, num=max_t_points)
+        else:
+            QuantumAnnealerEnv.t = np.array(list(range(1, final_t + 1)))
         QuantumAnnealerEnv.psi0 = H0.eigenstates()[1][0]
         QuantumAnnealerEnv.M = num_x_components
         QuantumAnnealerEnv.l = l

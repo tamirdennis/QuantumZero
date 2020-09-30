@@ -12,7 +12,7 @@ import time
 from src.mcts import MCTS, execute_regular_mcts_episode, MCTSNode
 from src.quantum_annealer_env import QuantumAnnealerEnv
 from src.config import DATA_PATH, N_QUBITS, T_LIST, PROBLEMS_INDEXES_LIST, M, l, DELTA, N_EXP, N_SIM,\
-    NUM_EPISODES_PER_PROBLEM
+    NUM_EPISODES_PER_PROBLEM, MAX_t_POINTS
 import numpy as np
 from src.hamiltonians_creators import create_sat_hamiltonians
 import csv
@@ -34,7 +34,8 @@ if __name__ == '__main__':
         for i in PROBLEMS_INDEXES_LIST:
             start_time = time.time()
             H0, H_final = create_sat_hamiltonians(N_QUBITS, data, i)
-            QuantumAnnealerEnv.init_env_from_params(H0, H_final, final_t, num_x_components=M, l=l, delta=DELTA)
+            QuantumAnnealerEnv.init_env_from_params(H0, H_final, final_t, num_x_components=M, l=l, delta=DELTA,
+                                                    max_t_points=MAX_t_POINTS)
             n_actions = QuantumAnnealerEnv.n_actions
             mcts = MCTS(QuantumAnnealerEnv)
             mcts.initialize_search()

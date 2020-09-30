@@ -1,5 +1,5 @@
 DATA_PATH = 'data/sat11.txt'
-N_QUBITS = 11
+N_QUBITS = 10
 T_LIST = list(range(30, 500, 30))
 M = 5
 l = 0.2

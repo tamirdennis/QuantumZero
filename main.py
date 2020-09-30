@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data = np.loadtxt(DATA_PATH)
     run_statistics_cols = ['T', 'Problem Index', 'Fidelity', 'Time To Solve', 'Num Episodes Per Problem']
     os.makedirs('output', exist_ok=True)
-    output_csv_path = os.path.join('output', 'run_statistics_qubo.csv')
+    output_csv_path = os.path.join('output', 'run_statistics_grover.csv')
     if not os.path.exists(output_csv_path):
         with open(output_csv_path, 'a') as f:
             writer = csv.writer(f)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     for final_t in T_LIST:
         for i in PROBLEMS_INDEXES_LIST:
             start_time = time.time()
-            H0, H_final = get_random_QUBO_Hf(N_QUBITS)
+            H0, H_final = create_grover_hamiltonians(N_QUBITS)
             QuantumAnnealerEnv.init_env_from_params(H0, H_final, final_t, num_x_components=M, l=l, delta=DELTA,
                                                     max_t_points=MAX_t_POINTS)
             n_actions = QuantumAnnealerEnv.n_actions

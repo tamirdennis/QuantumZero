@@ -432,7 +432,7 @@ class MCTS:
         del self.root.parent.children
 
 
-def execute_regular_mcts_episode(mcts, num_simulations, num_expansion, best_merit=float('inf')):
+def execute_regular_mcts_episode(mcts, num_simulations, num_expansion, best_merit=-float('inf')):
     """
         Executes a single episode of the task using Monte-Carlo tree search.
         An episode consists of 4 stages: selection, expansion, simulation and back propagation.
@@ -460,7 +460,7 @@ def execute_regular_mcts_episode(mcts, num_simulations, num_expansion, best_meri
         for done_node, im_merit in zip(done_nodes, immediate_merits):
             done_node.backup_value(im_merit, up_to=mcts.root)
             done_node.update_visits(up_to=mcts.root)
-            if im_merit < best_merit:
+            if im_merit > best_merit:
                 curr_best_path_node = done_node
                 best_merit = im_merit
     # TODO when upgrading using NN add memory and return it for training.

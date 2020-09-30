@@ -100,7 +100,7 @@ class QuantumAnnealerEnv(gym.Env, StaticEnv):
         if step_idx != QuantumAnnealerEnv.M:
             return 0
         rho_final = QuantumAnnealerEnv.get_rho_final_of_done_state(state)
-        return abs((rho_final.trans() * QuantumAnnealerEnv.H_final * rho_final)[0][0][0])
+        return -abs((rho_final.trans() * QuantumAnnealerEnv.H_final * rho_final)[0][0][0])
 
 
 if __name__ == '__main__':

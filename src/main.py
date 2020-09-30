@@ -37,7 +37,7 @@ if __name__ == '__main__':
             n_actions = QuantumAnnealerEnv.n_actions
             mcts = MCTS(QuantumAnnealerEnv)
             mcts.initialize_search()
-            best_merit = float('inf')
+            best_merit = -float('inf')
             best_node_path: MCTSNode = None
             for j in range(NUM_EPISODES_PER_PROBLEM):
 

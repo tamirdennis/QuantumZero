@@ -51,7 +51,7 @@ def create_sat_hamiltonians(n_qubit, data, problem_row):
 
 def create_grover_hamiltonians(num_of_qubits):
     N = 2**num_of_qubits
-    ind2find = np.random.randint(N)
+    ind2find = N // 4
     H_f = np.diag(np.ones(N))
     H_f[ind2find, ind2find] = 0
     return general_H0_creator(num_of_qubits), Qobj(H_f)

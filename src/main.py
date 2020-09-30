@@ -11,7 +11,7 @@ import time
 # from src.hill_climbing_env import HillClimbingEnv
 from src.mcts import MCTS, execute_regular_mcts_episode, MCTSNode
 from src.quantum_annealer_env import QuantumAnnealerEnv
-from src.config import DATA_PATH, N_QUBITS, T_LIST, NUM_PROBLEMS_PER_T, M, l, DELTA, N_EXP, N_SIM,\
+from src.config import DATA_PATH, N_QUBITS, T_LIST, PROBLEMS_INDEXES_LIST, M, l, DELTA, N_EXP, N_SIM,\
     NUM_EPISODES_PER_PROBLEM
 import numpy as np
 from src.sat_hamiltonyans_creator import create_sat_hamiltonians
@@ -19,34 +19,18 @@ import csv
 import os
 
 
-def log(test_env, iteration, step_idx, total_rew):
-    """
-    Logs one step in a testing episode.
-    :param test_env: Test environment that should be rendered.
-    :param iteration: Number of training iterations so far.
-    :param step_idx: Index of the step in the episode.
-    :param total_rew: Total reward collected so far.
-    """
-    time.sleep(0.3)
-    print()
-    print(f"Training Episodes: {iteration}")
-    test_env.render()
-    print(f"Step: {step_idx}")
-    print(f"Return: {total_rew}")
-
-
 if __name__ == '__main__':
 
     data = np.loadtxt(DATA_PATH)
     run_statistics_cols = ['T', 'Problem Index', 'Fidelity', 'Time To Solve', 'Num Episodes Per Problem']
     os.makedirs('output', exist_ok=True)
-    output_csv_path = os.path.join('output', 'run_statistics_200-80.csv')
+    output_csv_path = os.path.join('output', 'run_statistics.csv')
     with open(output_csv_path, 'a') as f:
         writer = csv.writer(f)
         writer.writerow(run_statistics_cols)
     run_statistics_rows = []
     for final_t in T_LIST:
-        for i in range(NUM_PROBLEMS_PER_T):
+        for i in PROBLEMS_INDEXES_LIST:
             start_time = time.time()
             H0, H_final = create_sat_hamiltonians(N_QUBITS, data, i)
             QuantumAnnealerEnv.init_env_from_params(H0, H_final, final_t, num_x_components=M, l=l, delta=DELTA)

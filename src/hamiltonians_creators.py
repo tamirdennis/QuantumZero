@@ -40,3 +40,5 @@ def create_sat_hamiltonians(n_qubit, data, problem_row):
     HP = HC
 
     return Qobj(HB), Qobj(HP)
+
+

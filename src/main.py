@@ -14,7 +14,7 @@ from src.quantum_annealer_env import QuantumAnnealerEnv
 from src.config import DATA_PATH, N_QUBITS, T_LIST, PROBLEMS_INDEXES_LIST, M, l, DELTA, N_EXP, N_SIM,\
     NUM_EPISODES_PER_PROBLEM
 import numpy as np
-from src.sat_hamiltonyans_creator import create_sat_hamiltonians
+from src.hamiltonians_creators import create_sat_hamiltonians
 import csv
 import os
 
@@ -25,9 +25,10 @@ if __name__ == '__main__':
     run_statistics_cols = ['T', 'Problem Index', 'Fidelity', 'Time To Solve', 'Num Episodes Per Problem']
     os.makedirs('output', exist_ok=True)
     output_csv_path = os.path.join('output', 'run_statistics.csv')
-    with open(output_csv_path, 'a') as f:
-        writer = csv.writer(f)
-        writer.writerow(run_statistics_cols)
+    if not os.path.exists(output_csv_path):
+        with open(output_csv_path, 'a') as f:
+            writer = csv.writer(f)
+            writer.writerow(run_statistics_cols)
     run_statistics_rows = []
     for final_t in T_LIST:
         for i in PROBLEMS_INDEXES_LIST:

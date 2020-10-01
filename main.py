@@ -30,10 +30,10 @@ if __name__ == '__main__':
             writer = csv.writer(f)
             writer.writerow(run_statistics_cols)
     run_statistics_rows = []
-    for final_t in T_LIST:
-        for i in PROBLEMS_INDEXES_LIST:
+    for i in PROBLEMS_INDEXES_LIST:
+        H0, H_final = create_grover_hamiltonians(N_QUBITS)
+        for final_t in T_LIST:
             start_time = time.time()
-            H0, H_final = create_grover_hamiltonians(N_QUBITS)
             QuantumAnnealerEnv.init_env_from_params(H0, H_final, final_t, num_x_components=M, l=l, delta=DELTA,
                                                     max_t_points=MAX_t_POINTS)
             n_actions = QuantumAnnealerEnv.n_actions

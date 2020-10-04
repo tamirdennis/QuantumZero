@@ -22,7 +22,7 @@ import os
 if __name__ == '__main__':
 
     data = np.loadtxt(DATA_PATH)
-    run_statistics_cols = ['T', 'Problem Index', 'Fidelity', 'Time To Solve', 'Num Episodes Per Problem']
+    run_statistics_cols = ['T', 'Problem Index', 'Fidelity', 'Time To Solve', 'Num Episodes Per Problem', 'best_X']
     os.makedirs('output', exist_ok=True)
     output_csv_path = os.path.join('output', 'run_statistics_grover.csv')
     if not os.path.exists(output_csv_path):
@@ -52,7 +52,7 @@ if __name__ == '__main__':
                     print(f'after {j} episodes of mcts the best fidelity is:')
                     print(best_node_path.get_fidelity_of_node())
             new_row = [final_t, i, best_node_path.get_fidelity_of_node(), time.time() - start_time,
-                       NUM_EPISODES_PER_PROBLEM]
+                       NUM_EPISODES_PER_PROBLEM, str(best_node_path.state)]
             run_statistics_rows.append(new_row)
             print(f'Adding following row to csv: \n {run_statistics_cols}')
             print(run_statistics_rows[-1])

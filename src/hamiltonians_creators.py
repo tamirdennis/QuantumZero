@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 from qutip import Qobj
 from scipy import sparse
@@ -125,8 +126,10 @@ def randomize_QUBO_small_gap(num_of_qubits):
     return QUBO_mat
 
 
-def get_random_QUBO_Hf(num_of_qubits):
+def get_random_QUBO_Hf(num_of_qubits, output_problem_path='output/qubo_problem.csv'):
     QUBO_mat = randomize_QUBO_small_gap(num_of_qubits)
     H_f_sparse = QUBO_to_Hamiltonian(QUBO_mat)
     H_final = Qobj(H_f_sparse.toarray())
+    output_problem = pd.DataFrame(H_f_sparse.toarray())
+    output_problem.to_csv(output_problem_path, header=False, index=False)
     return general_H0_creator(num_of_qubits), H_final
